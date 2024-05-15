@@ -7,7 +7,7 @@ resource "aws_vpc" "vpc" {
 resource "aws_subnet" "public_subnet_a" {
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = "10.0.0.0/24"
-  availability_zone       = "ap-southeast-1"
+  availability_zone       = "ap-southeast-1a"
   map_public_ip_on_launch = true
   tags = {
     Name = "Public Subnet A"
@@ -17,12 +17,6 @@ resource "aws_subnet" "public_subnet_a" {
 # Create an Internet Gateway
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc.id
-}
-
-# Attach the Internet Gateway to the VPC
-resource "aws_vpc_attachment" "igw_attachment" {
-  vpc_id              = aws_vpc.vpc.id
-  internet_gateway_id = aws_internet_gateway.igw.id
 }
 
 # Create a Route Table
