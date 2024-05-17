@@ -37,3 +37,6 @@ terraform.rc
 
 sample.zip
 inventory.yaml
+
+# Ignore PEM files
+*.pem
