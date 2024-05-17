@@ -26,7 +26,7 @@ resource "null_resource" "update_apt" {
 
   provisioner "remote-exec" {
     inline = [
-      "sleep 10 && sudo apt-get update && sudo apt-get upgrade -y"
+      "sleep 10"
     ]
 
     connection {
