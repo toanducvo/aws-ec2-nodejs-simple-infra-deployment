@@ -16,15 +16,33 @@ resource "aws_instance" "expressjs_instance" {
   }
 }
 
-resource "local_file" "host_file" {
+resource "local_file" "inventory_file" {
   content  = templatefile("${path.module}/templates/inventory.tpl", { key_name = "${aws_key_pair.ec2_key.key_name}.pem", public_ip = aws_instance.expressjs_instance.public_ip, username = "ubuntu" })
   filename = "./inventory.yaml"
 }
 
+resource "null_resource" "update_apt" {
+  depends_on = [aws_instance.expressjs_instance]
+
+  provisioner "remote-exec" {
+    inline = [
+      "sleep 10 && sudo apt-get update && sudo apt-get upgrade -y"
+    ]
+
+    connection {
+      type        = "ssh"
+      host        = aws_instance.expressjs_instance.public_ip
+      user        = "ubuntu"
+      private_key = file("${aws_key_pair.ec2_key.key_name}.pem")
+    }
+  }
+}
+
 resource "null_resource" "ansible_provisioner" {
-  depends_on = [local_file.host_file, aws_instance.expressjs_instance]
+  depends_on = [local_file.inventory_file, null_resource.update_apt]
+
   provisioner "local-exec" {
-    command = "ansible-playbook -i ./inventory.yaml playbook.yaml"
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./inventory.yaml playbook.yaml"
   }
 }
 

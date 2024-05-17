@@ -2,7 +2,7 @@
 - name: Deploy the application
   hosts: all
   become: yes
-  # become_user: root
+  become_user: root
   tasks:
     - name: Install unzip
       ansible.builtin.package:
@@ -17,17 +17,19 @@
     - name: Install the nvm
       command: bash /home/ubuntu/install_nvm.sh
 
-    - name: Install Node.js
+    - name: Delete the nvm installation script
+      ansible.builtin.file:
+        path: /home/ubuntu/install_nvm.sh
+        state: absent
+
+    - name: Install desired Node.js version with nvm
       shell: '. {{ ansible_env.HOME }}/.nvm/nvm.sh && nvm install node'
       args:
-        creates: "{{ ansible_env.HOME }}/.nvm/versions/node"
-        chdir: "{{ ansible_env.HOME }}"
         executable: /bin/bash
 
-    - name: Install pm2
+    - name: Install pm2 globally using npm
       shell: '. {{ ansible_env.HOME }}/.nvm/nvm.sh && npm install pm2 -g'
       args:
-        creates: "{{ ansible_env.HOME }}/.nvm/versions/node"
         executable: /bin/bash
 
     - name: Copy the zip file
@@ -35,15 +37,10 @@
         src: sample.zip
         dest: /home/ubuntu/sample.zip
 
-    - name: Create the directory
-      ansible.builtin.file:
-        path: /home/ubuntu/sample
-        state: directory
-
     - name: Unzip the file
       ansible.builtin.unarchive:
         src: /home/ubuntu/sample.zip
-        dest: /home/ubuntu/sample
+        dest: /home/ubuntu
         remote_src: yes
 
     - name: Remove the zip file
@@ -54,24 +51,9 @@
     - name: Install the dependencies
       shell: '. {{ ansible_env.HOME }}/.nvm/nvm.sh && cd /home/ubuntu/sample && npm install'
       args:
-        creates: "{{ ansible_env.HOME }}/.nvm/versions/node"
         executable: /bin/bash
 
     - name: Start the application
       shell: '. {{ ansible_env.HOME }}/.nvm/nvm.sh && pm2 start /home/ubuntu/sample/index.js'
       args:
-        creates: "{{ ansible_env.HOME }}/.nvm/versions/node"
         executable: /bin/bash
-
-    - name: Save the process list
-      shell: '. {{ ansible_env.HOME }}/.nvm/nvm.sh && pm2 save'
-      args:
-        creates: "{{ ansible_env.HOME }}/.nvm/versions/node"
-        executable: /bin/bash
-
-    - name: Generate the startup script
-      shell: '. {{ ansible_env.HOME }}/.nvm/nvm.sh && pm2 startup'
-      args:
-        creates: "{{ ansible_env.HOME }}/.nvm/versions/node"
-        executable: /bin/bash
-
